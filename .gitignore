@@ -1,0 +1,54 @@
+# --- Unity Folders to Ignore ---
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# --- Android Specific (New for 2026/Unity 6+) ---
+.utmp/
+
+# --- Asset Metadata ---
+# Asset meta data should only be ignored when the corresponding asset is also ignored
+!/[Aa]ssets/**/*.meta
+
+# --- Unity-Generated Project Files ---
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# --- Build Artifacts ---
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# --- IDE Folders ---
+.vs/
+.gradle/
+.vscode/
+/[Aa]ssets/Plugins/Editor/JetBrains*
+*.DotSettings.user
+
+# --- OS Generated Files ---
+.DS_Store
+Thumbs.db
+
+# --- Optional: Addressables & Visual Scripting ---
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/[Aa]ssets/Unity.VisualScripting.Generated/*
