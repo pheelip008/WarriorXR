@@ -7,6 +7,7 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
     public Transform cameraOffset;         // Camera Offset
     public HeadZoneDetector zoneDetector;
     public PlaneBendController_Part2 planeController;
+    public static HeadBendZoneController_Part2 Instance;
 
     [Header("Bend Threshold")]
     public float bendThreshold = 0.02f;    // meters
@@ -18,6 +19,10 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
     {
         Calibrate();
     }
+    void Awake()
+    {
+        Instance = this;
+    }
 
     public void Calibrate()
     {
@@ -25,6 +30,7 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
         calibrated = true;
         Debug.Log($"[Part2] Baseline height: {baselineHeight:F3}");
     }
+    
 
     void Update()
     {
