@@ -23,6 +23,7 @@ public class HeadZoneDetector : MonoBehaviour
 
     if (other.CompareTag("RightZone"))
         inRightZone = true;
+    
 }
 
 void OnTriggerExit(Collider other)
