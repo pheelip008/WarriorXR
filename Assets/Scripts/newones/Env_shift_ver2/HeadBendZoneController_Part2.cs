@@ -103,6 +103,10 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
 
     float baselineHeight;
     bool calibrated;
+    [Header("Bend Thresholds (Percent of Height)")]
+[Range(0f, 1f)] public float minBendPercent = 0.85f; // 10%
+[Range(0f, 1f)] public float maxBendPercent = 0.90f; // 15%
+
 
     void Awake()
     {
@@ -122,56 +126,110 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
         Debug.Log($"[Part2] Baseline height recorded: {baselineHeight:F3}");
     }
 
+//     void Update()
+//     {
+//         if (!calibrated || planeController == null || zoneDetector == null)
+//             return;
+
+//         float currentHeight = head.position.y;
+
+//         /* ==============================
+//          * 1. UPPER THRESHOLD (SUCCESS UI)
+//          * ============================== */
+//         bool aboveUpper =
+//             currentHeight > baselineHeight + upperBendThreshold;
+
+//         if (successUI != null && successUI.activeSelf != aboveUpper)
+//             successUI.SetActive(aboveUpper);
+
+//         /* ==============================
+//          * 2. LOWER THRESHOLD (BEND LOGIC)
+//          * ============================== */
+//         if (currentHeight > baselineHeight - bendThreshold)
+//         {
+//             // Not bent enough → reset plane
+//             planeController.SetBend(0f, 0);
+//             return;
+//         }
+
+//         // float bendAmount =
+//         //     Mathf.Clamp01((baselineHeight - currentHeight) / bendThreshold);
+//         float downwardDisplacement =
+//     Mathf.Max(0f, baselineHeight - currentHeight);
+
+// float bendAmount =
+//     Mathf.Clamp01(downwardDisplacement / bendThreshold);
+
+
+//         // --- ZONE RULES ---
+//         if (zoneDetector.ActiveZoneCount() != 1)
+//         {
+//             planeController.SetBend(0f, 0);
+//             return;
+//         }
+
+//         if (zoneDetector.inLeftZone)
+//         {
+//             planeController.SetBend(bendAmount, +1);
+//         }
+//         else if (zoneDetector.inRightZone)
+//         {
+//             planeController.SetBend(bendAmount, -1);
+//         }
+//     }
     void Update()
     {
-        if (!calibrated || planeController == null || zoneDetector == null)
-            return;
+    if (!calibrated || planeController == null || zoneDetector == null)
+        return;
 
-        float currentHeight = head.position.y;
+    float currentHeight = head.position.y;
 
-        /* ==============================
-         * 1. UPPER THRESHOLD (SUCCESS UI)
-         * ============================== */
-        bool aboveUpper =
-            currentHeight > baselineHeight + upperBendThreshold;
+    // Calculate normalized height reduction
+    float heightDrop = baselineHeight - currentHeight;
+    float heightDropPercent = heightDrop / baselineHeight;
 
-        if (successUI != null && successUI.activeSelf != aboveUpper)
-            successUI.SetActive(aboveUpper);
+    /* ==============================
+     * 1. SUCCESS UI (OPTIONAL)
+     * ============================== */
+    bool inValidBendRange =
+        heightDropPercent >= minBendPercent &&
+        heightDropPercent <= maxBendPercent;
 
-        /* ==============================
-         * 2. LOWER THRESHOLD (BEND LOGIC)
-         * ============================== */
-        if (currentHeight > baselineHeight - bendThreshold)
-        {
-            // Not bent enough → reset plane
-            planeController.SetBend(0f, 0);
-            return;
-        }
+    if (successUI != null && successUI.activeSelf != inValidBendRange)
+        successUI.SetActive(inValidBendRange);
 
-        // float bendAmount =
-        //     Mathf.Clamp01((baselineHeight - currentHeight) / bendThreshold);
-        float downwardDisplacement =
-    Mathf.Max(0f, baselineHeight - currentHeight);
-
-float bendAmount =
-    Mathf.Clamp01(downwardDisplacement / bendThreshold);
-
-
-        // --- ZONE RULES ---
-        if (zoneDetector.ActiveZoneCount() != 1)
-        {
-            planeController.SetBend(0f, 0);
-            return;
-        }
-
-        if (zoneDetector.inLeftZone)
-        {
-            planeController.SetBend(bendAmount, +1);
-        }
-        else if (zoneDetector.inRightZone)
-        {
-            planeController.SetBend(bendAmount, -1);
-        }
+    /* ==============================
+     * 2. BEND ACTIVATION
+     * ============================== */
+    if (!inValidBendRange)
+    {
+        planeController.SetBend(0f, 0);
+        return;
     }
+
+    // Normalize bend strength between 10% → 15%
+    float bendAmount = Mathf.InverseLerp(
+        minBendPercent,
+        maxBendPercent,
+        heightDropPercent
+    );
+
+    // --- ZONE RULES ---
+    if (zoneDetector.ActiveZoneCount() != 1)
+    {
+        planeController.SetBend(0f, 0);
+        return;
+    }
+
+    if (zoneDetector.inLeftZone)
+        planeController.SetBend(bendAmount, +1);
+    else if (zoneDetector.inRightZone)
+        planeController.SetBend(bendAmount, -1);
+
+    
+    Debug.Log($"Height drop: {heightDropPercent * 100f:F1}%");
+
+}
+
 }
 
