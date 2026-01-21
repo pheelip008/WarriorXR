@@ -677,7 +677,7 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
         // =========================================================
         // 3. UPPER HEIGHT UI
         // =========================================================
-        bool isAboveUpper = heightDiff > upperBendThreshold;
+        bool isAboveUpper = -heightDiff < upperBendThreshold;
         if (successUI != null && successUI.activeSelf != isAboveUpper)
             successUI.SetActive(isAboveUpper);
 
