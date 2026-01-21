@@ -1,236 +1,4 @@
-// using UnityEngine;
 
-// public class HeadBendZoneController_Part2 : MonoBehaviour
-// {
-//     [Header("References")]
-//     public Transform head;                 // Main Camera
-//     public Transform cameraOffset;         // Camera Offset
-//     public HeadZoneDetector zoneDetector;
-//     public PlaneBendController_Part2 planeController;
-//     public static HeadBendZoneController_Part2 Instance;
-
-//     [Header("Upper Threshold")]
-//     public float upperBendThreshold = 0.005f; // meters (e.g., deeper bend)
-
-//     [Header("UI Feedback")]
-// public GameObject successUI;               // assign in Inspector
-
-
-//     [Header("Bend Threshold")]
-//     public float bendThreshold = 0.02f;    // meters
-
-//     float baselineHeight;
-//     bool calibrated;
-
-//     void Start()
-//     {
-//         Calibrate();
-//     }
-//     void Awake()
-//     {
-//         Instance = this;
-//     }
-
-//     public void Calibrate()
-//     {
-//         baselineHeight = head.position.y - cameraOffset.position.y;
-//         calibrated = true;
-//         Debug.Log($"[Part2] Baseline height: {baselineHeight:F3}");
-
-//     }
-//     void UpdateUpperThresholdUI(float delta)
-//     {
-//     if (successUI == null)
-//         return;
-
-//     bool crossedUpper = delta <= -upperBendThreshold;
-
-//     if (successUI.activeSelf != crossedUpper)
-//         successUI.SetActive(crossedUpper);
-//     }
-
-    
-
-//     void Update()
-//     {
-//         if (!calibrated || planeController == null || zoneDetector == null)
-//             return;
-//         float currentHeight = head.position.y - cameraOffset.position.y;
-//         float delta = baselineHeight - currentHeight;
-
-//         float bendAmount = Mathf.Clamp01(delta / bendThreshold);
-//         // UpdateUpperThresholdUI(delta);
-
-
-//         // --- ZONE RULES ---
-//         if (zoneDetector.ActiveZoneCount() != 1)
-//         {
-//             // No zone or both zones → no bending
-//             planeController.SetBend(0f, 0);
-//             return;
-//         }
-
-//         if (zoneDetector.inLeftZone)
-//         {
-//             // Left zone → +X bend
-//             planeController.SetBend(bendAmount, +1);
-//         }
-//         else if (zoneDetector.inRightZone)
-//         {
-//             // Right zone → -X bend
-//             planeController.SetBend(bendAmount, -1);
-//         }
-//     }
-// }
-
-// using UnityEngine;
-// using System.Collections;
-
-// public class HeadBendZoneController_Part2 : MonoBehaviour
-// {
-//     [Header("References")]
-//     public Transform head;                 // Main Camera
-//     public Transform cameraOffset;         // Camera Offset (optional, can be null)
-//     public HeadZoneDetector zoneDetector;
-//     public PlaneBendController_Part2 planeController;
-//     public static HeadBendZoneController_Part2 Instance;
-
-//     [Header("Calibration Settings")]
-//     [Tooltip("Total time to make the user stand straight.")]
-//     public float totalCalibrationTime = 5.0f;
-//     [Tooltip("The specific second at which to snap the height.")]
-//     public float captureTime = 3.0f;
-
-//     [Header("Triggers")]
-//     [Tooltip("Height DROP required to start bending (meters).")]
-//     public float bendThreshold = 0.20f;    
-    
-//     [Tooltip("Height RISE above baseline to trigger Success UI (meters).")]
-//     public float upperBendThreshold = 0.05f; 
-
-//     [Header("UI Feedback")]
-//     public GameObject successUI;
-
-//     // Internal State
-//     private float baselineHeight;
-//     private bool calibrated = false;
-
-//     void Awake()
-//     {
-//         Instance = this;
-//     }
-
-//     void Start()
-//     {
-//         StartCoroutine(CalibrateHeight());
-//     }
-
-//     /// <summary>
-//     /// Waits for 'captureTime' (3s) to snap height, then waits until 'totalCalibrationTime' (5s) is done.
-//     /// </summary>
-//     private IEnumerator CalibrateHeight()
-//     {
-//         calibrated = false;
-//         float timer = 0f;
-//         bool hasCaptured = false;
-
-//         Debug.Log($"[Part2] Starting Calibration ({totalCalibrationTime}s)... Stand straight!");
-
-//         while (timer < totalCalibrationTime)
-//         {
-//             timer += Time.deltaTime;
-
-//             // Snap height exactly at the 3-second mark
-//             if (timer >= captureTime && !hasCaptured)
-//             {
-//                 float yPos = head.position.y;
-//                 // Subtract offset if it exists
-//                 if (cameraOffset != null) yPos -= cameraOffset.position.y;
-
-//                 baselineHeight = yPos;
-//                 hasCaptured = true;
-//                 Debug.Log($"[Part2] Snapshot taken at {timer:F2}s. Baseline Height: {baselineHeight:F3}");
-//             }
-
-//             yield return null;
-//         }
-
-//         // Failsafe: If frame timing missed the capture, take it now
-//         if (!hasCaptured)
-//         {
-//             float yPos = head.position.y;
-//             if (cameraOffset != null) yPos -= cameraOffset.position.y;
-//             baselineHeight = yPos;
-//         }
-
-//         calibrated = true;
-//         Debug.Log("[Part2] Calibration Complete. Game Active.");
-//     }
-
-//     void Update()
-//     {
-//         // 1. Safety Checks
-//         if (!calibrated || planeController == null || zoneDetector == null)
-//             return;
-
-//         // 2. Calculate Current Height
-//         float currentY = head.position.y;
-//         if (cameraOffset != null) currentY -= cameraOffset.position.y;
-
-//         // Calculate difference (Positive = standing taller, Negative = crouching)
-//         float diff = currentY - baselineHeight;
-
-//         // =========================================================
-//         // LOGIC A: UPPER THRESHOLD (Standing Tall / Success UI)
-//         // =========================================================
-//         // If current height is ABOVE (baseline + upperThreshold)
-//         bool isAboveUpper = diff > upperBendThreshold;
-
-//         if (successUI != null)
-//         {
-//             if (successUI.activeSelf != isAboveUpper)
-//                 successUI.SetActive(isAboveUpper);
-//         }
-
-//         // =========================================================
-//         // LOGIC B: LOWER THRESHOLD (Bending the Plane)
-//         // =========================================================
-//         // We only care about how much we have DROPPED below baseline
-//         float dropAmount = -diff; // Invert so positive means we are down
-
-//         // If we haven't dropped enough (dropAmount < bendThreshold), reset and exit
-//         if (dropAmount < bendThreshold)
-//         {
-//             planeController.SetBend(0f, 0);
-//             return;
-//         }
-
-//         // Calculate bend intensity (0 to 1)
-//         // Example: If threshold is 0.2 and we dropped 0.4, result is (0.4 / 0.2) = 2.0 -> Clamped to 1.0
-//         // You might want to offset this so it starts bending AFTER the threshold.
-//         // Current formula: Intensity scales based on total drop relative to threshold.
-//         float bendAmount = Mathf.Clamp01(dropAmount / (bendThreshold * 2f)); 
-//         // Note: I multiplied threshold by 2f to make the bend smoother (full bend at 2x threshold). 
-//         // Remove "* 2f" if you want instant full bend at threshold.
-
-//         // --- ZONE RULES ---
-//         if (zoneDetector.ActiveZoneCount() != 1)
-//         {
-//             // No zone or both zones → no bending
-//             planeController.SetBend(0f, 0);
-//         }
-//         else if (zoneDetector.inLeftZone)
-//         {
-//             // Left zone → +X bend
-//             planeController.SetBend(bendAmount, +1);
-//         }
-//         else if (zoneDetector.inRightZone)
-//         {
-//             // Right zone → -X bend
-//             planeController.SetBend(bendAmount, -1);
-//         }
-//     }
-// }
 // using UnityEngine;
 // using System.Collections;
 
@@ -535,6 +303,171 @@
 //         planeController.SetBend(bendAmount, direction);
 //     }
 // }
+// using UnityEngine;
+// using System.Collections;
+
+// public class HeadBendZoneController_Part2 : MonoBehaviour
+// {
+//     [Header("References")]
+//     public Transform head;                 
+//     public Transform cameraOffset;         
+//     public PlaneBendController_Part2 planeController;
+//     public static HeadBendZoneController_Part2 Instance;
+
+//     [Header("Calibration Settings")]
+//     public float totalCalibrationTime = 5.0f;
+
+//     [Header("Controls")]
+//     public bool invertSteering = false; 
+
+//     [Header("Dynamic Thresholds (Read Only)")]
+//     public float bendHeightThreshold; 
+//     public float realHeightDebug;     
+
+//     [Header("Fixed Thresholds")]
+//     public float upperBendThreshold = 0.05f; 
+//     public float lateralThreshold = 0.15f; 
+//     [Tooltip("Angle in degrees to trigger tilt warning")]
+//     public float maxHeadTiltAngle = 45f; // NEW: 45 Degree Limit
+
+//     [Header("Debug")]
+//     public string steeringDebug = "None"; 
+//     public float currentLateralDiff = 0f;
+
+//     [Header("UI Feedback")]
+//     public GameObject successUI;
+//     public GameObject extremeTiltUI; // NEW: Assign this in Inspector
+
+//     // Internal State
+//     private float baselineHeight;
+//     private float baselineLateral; 
+//     private bool useXAxis = true;  
+//     private bool calibrated = false;
+
+//     void Awake()
+//     {
+//         Instance = this;
+//     }
+
+//     void Start()
+//     {
+//         StartCoroutine(Calibrate());
+//     }
+
+//     private IEnumerator Calibrate()
+//     {
+//         calibrated = false;
+//         float timer = 0f;
+
+//         Debug.Log($"[Part2] Calibrating... Stand straight and CENTERED.");
+
+//         while (timer < totalCalibrationTime)
+//         {
+//             timer += Time.deltaTime;
+
+//             // 1. Height
+//             float yPos = head.position.y;
+//             if (cameraOffset != null) yPos -= cameraOffset.position.y;
+//             baselineHeight = yPos;
+
+//             // 2. Lateral
+//             baselineLateral = head.position.x;
+
+//             yield return null;
+//         }
+
+//         // --- AUTO-DETECT ROTATION ---
+//         Vector3 forwardDir = head.forward;
+//         if (Mathf.Abs(forwardDir.z) > Mathf.Abs(forwardDir.x))
+//         {
+//             useXAxis = true; 
+//             baselineLateral = head.position.x;
+//             Debug.Log("[Part2] Rotation Detected: Facing Z. Steering with X-Axis.");
+//         }
+//         else
+//         {
+//             useXAxis = false; 
+//             baselineLateral = head.position.z;
+//             Debug.Log("[Part2] Rotation Detected: Facing X. Steering with Z-Axis.");
+//         }
+
+//         // --- CALCULATE DYNAMIC THRESHOLD ---
+//         float h_calc = baselineHeight - 1.03f;
+//         realHeightDebug = h_calc; 
+
+//         float l = h_calc * 0.45f;
+//         float legHeightSquatted = 0f;
+        
+//         if (l > 0.5f) legHeightSquatted = Mathf.Sqrt((l * l) - (0.5f * 0.5f));
+//         else legHeightSquatted = 0.1f; 
+
+//         float targetSquatHeight = (h_calc / 2.0f) + legHeightSquatted;
+//         bendHeightThreshold = h_calc - targetSquatHeight;
+
+//         if (bendHeightThreshold < 0.05f) bendHeightThreshold = 0.05f;
+//         Debug.Log($"[Part2] Threshold Set: {bendHeightThreshold:F3}m");
+
+//         calibrated = true;
+//     }
+
+//     void Update()
+//     {
+//         if (!calibrated || planeController == null) return;
+
+//         // =========================================================
+//         // 1. HEAD TILT CHECK (NEW LOGIC)
+//         // =========================================================
+//         // Convert 0-360 angle to -180 to 180 format
+//         float currentTilt = head.eulerAngles.z;
+//         if (currentTilt > 180) currentTilt -= 360;
+
+//         // Check if tilt exceeds 45 degrees (positive or negative)
+//         bool isExtremeTilt = Mathf.Abs(currentTilt) > maxHeadTiltAngle;
+
+//         if (extremeTiltUI != null)
+//         {
+//             if (extremeTiltUI.activeSelf != isExtremeTilt)
+//                 extremeTiltUI.SetActive(isExtremeTilt);
+//         }
+
+//         // =========================================================
+//         // 2. POSITION CALCULATIONS
+//         // =========================================================
+//         float currentY = head.position.y;
+//         if (cameraOffset != null) currentY -= cameraOffset.position.y;
+//         float heightDiff = currentY - baselineHeight;
+//         float dropAmount = -heightDiff; 
+
+//         float currentLateral = useXAxis ? head.position.x : head.position.z;
+//         float lateralDiff = currentLateral - baselineLateral;
+//         currentLateralDiff = lateralDiff; 
+
+//         // =========================================================
+//         // 3. UPPER HEIGHT UI
+//         // =========================================================
+//         bool isAboveUpper = -heightDiff < upperBendThreshold;
+//         if (successUI != null && successUI.activeSelf != isAboveUpper)
+//             successUI.SetActive(isAboveUpper);
+
+//         // =========================================================
+//         // 4. BEND PHYSICS LOGIC
+//         // =========================================================
+//         if (dropAmount < bendHeightThreshold || Mathf.Abs(lateralDiff) < lateralThreshold)
+//         {
+//             planeController.SetBend(0f, 0);
+//             steeringDebug = "Idle";
+//             return;
+//         }
+
+//         float bendAmount = Mathf.Clamp01(dropAmount / (bendHeightThreshold * 2f));
+//         int direction = (lateralDiff > 0) ? 1 : -1;
+//         if (invertSteering) direction = -direction;
+
+//         steeringDebug = (direction == 1) ? "RIGHT >>" : "<< LEFT";
+//         planeController.SetBend(bendAmount, direction);
+//     }
+// }
+
 using UnityEngine;
 using System.Collections;
 
@@ -555,12 +488,15 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
     [Header("Dynamic Thresholds (Read Only)")]
     public float bendHeightThreshold; 
     public float realHeightDebug;     
+    
+    // NEW: Multiplier received from the Difficulty Manager
+    public float difficultyMultiplier = 1.0f; 
 
     [Header("Fixed Thresholds")]
     public float upperBendThreshold = 0.05f; 
     public float lateralThreshold = 0.15f; 
     [Tooltip("Angle in degrees to trigger tilt warning")]
-    public float maxHeadTiltAngle = 45f; // NEW: 45 Degree Limit
+    public float maxHeadTiltAngle = 45f; 
 
     [Header("Debug")]
     public string steeringDebug = "None"; 
@@ -568,7 +504,7 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
 
     [Header("UI Feedback")]
     public GameObject successUI;
-    public GameObject extremeTiltUI; // NEW: Assign this in Inspector
+    public GameObject extremeTiltUI; 
 
     // Internal State
     private float baselineHeight;
@@ -584,6 +520,13 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
     void Start()
     {
         StartCoroutine(Calibrate());
+    }
+
+    // NEW FUNCTION: Called by GameTimeManager to make game harder
+    public void ApplyDifficultyMultiplier(float multiplier)
+    {
+        difficultyMultiplier = multiplier;
+        Debug.Log($"[Part2] Difficulty Multiplier Set To: {difficultyMultiplier}");
     }
 
     private IEnumerator Calibrate()
@@ -634,10 +577,18 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
         else legHeightSquatted = 0.1f; 
 
         float targetSquatHeight = (h_calc / 2.0f) + legHeightSquatted;
-        bendHeightThreshold = h_calc - targetSquatHeight;
+        
+        // BASE CALCULATION
+        float baseThreshold = h_calc - targetSquatHeight;
+        
+        // *** CRITICAL CHANGE: APPLY DIFFICULTY MULTIPLIER ***
+        // Example: If mult is 1.2, user must squat 20% deeper than normal
+        bendHeightThreshold = baseThreshold * difficultyMultiplier;
 
+        // Safety clamp
         if (bendHeightThreshold < 0.05f) bendHeightThreshold = 0.05f;
-        Debug.Log($"[Part2] Threshold Set: {bendHeightThreshold:F3}m");
+        
+        Debug.Log($"[Part2] Threshold Finalized: {bendHeightThreshold:F3}m (Mult: {difficultyMultiplier})");
 
         calibrated = true;
     }
@@ -646,14 +597,9 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
     {
         if (!calibrated || planeController == null) return;
 
-        // =========================================================
-        // 1. HEAD TILT CHECK (NEW LOGIC)
-        // =========================================================
-        // Convert 0-360 angle to -180 to 180 format
+        // 1. HEAD TILT
         float currentTilt = head.eulerAngles.z;
         if (currentTilt > 180) currentTilt -= 360;
-
-        // Check if tilt exceeds 45 degrees (positive or negative)
         bool isExtremeTilt = Mathf.Abs(currentTilt) > maxHeadTiltAngle;
 
         if (extremeTiltUI != null)
@@ -662,9 +608,7 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
                 extremeTiltUI.SetActive(isExtremeTilt);
         }
 
-        // =========================================================
         // 2. POSITION CALCULATIONS
-        // =========================================================
         float currentY = head.position.y;
         if (cameraOffset != null) currentY -= cameraOffset.position.y;
         float heightDiff = currentY - baselineHeight;
@@ -674,16 +618,12 @@ public class HeadBendZoneController_Part2 : MonoBehaviour
         float lateralDiff = currentLateral - baselineLateral;
         currentLateralDiff = lateralDiff; 
 
-        // =========================================================
         // 3. UPPER HEIGHT UI
-        // =========================================================
-        bool isAboveUpper = -heightDiff < upperBendThreshold;
+        bool isAboveUpper = heightDiff > upperBendThreshold;
         if (successUI != null && successUI.activeSelf != isAboveUpper)
             successUI.SetActive(isAboveUpper);
 
-        // =========================================================
         // 4. BEND PHYSICS LOGIC
-        // =========================================================
         if (dropAmount < bendHeightThreshold || Mathf.Abs(lateralDiff) < lateralThreshold)
         {
             planeController.SetBend(0f, 0);

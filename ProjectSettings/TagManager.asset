@@ -8,6 +8,8 @@ TagManager:
   - MainPlayer
   - RightZone
   - LeftZone
+  - RopeSegment
+  - Ball
   layers:
   - Default
   - TransparentFX

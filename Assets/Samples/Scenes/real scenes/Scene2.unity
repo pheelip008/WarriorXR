@@ -1402,7 +1402,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &791683673
 Transform:
   m_ObjectHideFlags: 0
@@ -1768,9 +1768,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95e875fb14c69c943848622fefe855c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  participantID: pheelip
-  condition: Emg scene 2 lvl hard
-  trialNumber: 1
+  participantID: Time testing
+  condition: lvl hard
+  trialNumber: 3
 --- !u!4 &881737380
 Transform:
   m_ObjectHideFlags: 0
