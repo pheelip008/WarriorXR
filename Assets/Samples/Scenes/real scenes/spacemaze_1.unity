@@ -5671,6 +5671,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5407493446131552788, guid: 2bba0c2fcf7404642b96c948c4e1d303, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5407493446131552788, guid: 2bba0c2fcf7404642b96c948c4e1d303, type: 3}
       propertyPath: scene1BaseTime
       value: 60
       objectReference: {fileID: 0}
