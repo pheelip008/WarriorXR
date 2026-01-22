@@ -101,6 +101,119 @@
 //     }
 // }
 
+// using UnityEngine;
+// using UnityEngine.SceneManagement;
+
+// public class DifficultyManager : MonoBehaviour
+// {
+//     public static DifficultyManager Instance;
+
+//     [Header("Current Status")]
+//     public int currentLevel = 1; // Starts at Level 1 (Easiest)
+//     public int maxLevel = 5;
+
+//     [Header("Level 1-5 Settings")]
+//     // Rotation Speeds: Level 1 (Easy/Fast=8) -> Level 5 (Hard/Slow=0.2)
+//     public float[] rotationSpeeds = { 8.0f, 6.0f, 4.0f, 3.0f, 0.2f }; 
+    
+//     // Threshold Multipliers: Level 1 (1.0x) -> Level 5 (1.2x deeper squat)
+//     public float[] thresholdMultipliers = { 1.0f, 1.05f, 1.1f, 1.15f, 1.2f };
+
+//     // Base Times: How long each scene takes on "Easy" mode
+//     // You can adjust these based on your own testing
+//     public float scene1BaseTime = 30f;
+//     public float scene2BaseTime = 45f;
+//     public float scene3BaseTime = 25f;
+
+//     void Awake()
+//     {
+//         // Singleton Pattern: Ensure only one brain exists and it survives scene loads
+//         if (Instance == null)
+//         {
+//             Instance = this;
+//             DontDestroyOnLoad(gameObject);
+//         }
+//         else
+//         {
+//             Destroy(gameObject);
+//         }
+//     }
+
+//     /// <summary>
+//     /// Returns the Rotation Speed for the current level.
+//     /// </summary>
+//     public float GetCurrentRotationSpeed()
+//     {
+//         // Safety check to prevent array index errors
+//         int index = Mathf.Clamp(currentLevel - 1, 0, rotationSpeeds.Length - 1);
+//         return rotationSpeeds[index];
+//     }
+
+//     /// <summary>
+//     /// Returns the Squat Multiplier for the current level.
+//     /// </summary>
+//     public float GetCurrentThresholdMultiplier()
+//     {
+//         int index = Mathf.Clamp(currentLevel - 1, 0, thresholdMultipliers.Length - 1);
+//         return thresholdMultipliers[index];
+//     }
+
+//     /// <summary>
+//     /// Calculates Ideal Time dynamically based on Scene and Difficulty.
+//     /// </summary>
+//     public float GetIdealTime(string sceneName)
+//     {
+//         float baseTime = 30f; // Default
+
+//         // Simple check to find which scene is active
+//         // Make sure your scene names in Build Settings match these keywords
+//         if (sceneName.Contains("1")) baseTime = scene1BaseTime;
+//         else if (sceneName.Contains("2")) baseTime = scene2BaseTime;
+//         else if (sceneName.Contains("3")) baseTime = scene3BaseTime;
+
+//         // Add penalties: Harder levels take longer to complete
+//         // Example: Level 5 adds ~30% more time allowance
+//         float difficultyPenalty = 1.0f + (currentLevel * 0.06f); 
+
+//         return baseTime * difficultyPenalty;
+//     }
+
+//     /// <summary>
+//     /// The Core Algorithm: Decides if level goes UP, DOWN, or STAYS.
+//     /// </summary>
+//     public void AnalyzePerformance(float scoreRatio)
+//     {
+//         Debug.Log($"[DifficultyManager] Analyzing Score Ratio: {scoreRatio:F2}");
+
+//         if (scoreRatio > 1.2f)
+//         {
+//             // Player was too fast (Game too easy) -> Increase Difficulty
+//             currentLevel++;
+//             Debug.Log("Result: Excellent! Level Up.");
+//         }
+//         else if (scoreRatio > 0.9f)
+//         {
+//             // Player is in the zone -> Progressive Overload (Increase slowly)
+//             currentLevel++; 
+//             Debug.Log("Result: Good Flow. Level Up (Progressive Overload).");
+//         }
+//         else if (scoreRatio < 0.6f)
+//         {
+//             // Player struggled significantly -> Decrease Difficulty
+//             currentLevel--;
+//             Debug.Log("Result: Struggled. Level Down.");
+//         }
+//         else
+//         {
+//             // Between 0.6 and 0.9 -> Maintain Level
+//             Debug.Log("Result: Balanced. Maintain Level.");
+//         }
+
+//         // Clamp values
+//         currentLevel = Mathf.Clamp(currentLevel, 1, maxLevel);
+//     }
+// }
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -108,8 +221,18 @@ public class DifficultyManager : MonoBehaviour
 {
     public static DifficultyManager Instance;
 
+    public enum DifficultyMode
+    {
+        Adaptive,   // Adjusts based on player skill (The "Novel" Algorithm)
+        Linear      // Always gets harder (The "Control" Algorithm)
+    }
+
+    [Header("Experiment Settings")]
+    [Tooltip("Choose 'Adaptive' for AI-adjustment, or 'Linear' for standard increasing difficulty.")]
+    public DifficultyMode progressionMode = DifficultyMode.Adaptive;
+
     [Header("Current Status")]
-    public int currentLevel = 1; // Starts at Level 1 (Easiest)
+    public int currentLevel = 1; // Starts at Level 1
     public int maxLevel = 5;
 
     [Header("Level 1-5 Settings")]
@@ -119,15 +242,13 @@ public class DifficultyManager : MonoBehaviour
     // Threshold Multipliers: Level 1 (1.0x) -> Level 5 (1.2x deeper squat)
     public float[] thresholdMultipliers = { 1.0f, 1.05f, 1.1f, 1.15f, 1.2f };
 
-    // Base Times: How long each scene takes on "Easy" mode
-    // You can adjust these based on your own testing
+    [Header("Base Times (For Adaptive Calc)")]
     public float scene1BaseTime = 30f;
     public float scene2BaseTime = 45f;
     public float scene3BaseTime = 25f;
 
     void Awake()
     {
-        // Singleton Pattern: Ensure only one brain exists and it survives scene loads
         if (Instance == null)
         {
             Instance = this;
@@ -139,77 +260,75 @@ public class DifficultyManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Returns the Rotation Speed for the current level.
-    /// </summary>
     public float GetCurrentRotationSpeed()
     {
-        // Safety check to prevent array index errors
         int index = Mathf.Clamp(currentLevel - 1, 0, rotationSpeeds.Length - 1);
         return rotationSpeeds[index];
     }
 
-    /// <summary>
-    /// Returns the Squat Multiplier for the current level.
-    /// </summary>
     public float GetCurrentThresholdMultiplier()
     {
         int index = Mathf.Clamp(currentLevel - 1, 0, thresholdMultipliers.Length - 1);
         return thresholdMultipliers[index];
     }
 
-    /// <summary>
-    /// Calculates Ideal Time dynamically based on Scene and Difficulty.
-    /// </summary>
     public float GetIdealTime(string sceneName)
     {
-        float baseTime = 30f; // Default
+        // Even in Linear mode, we need an "Ideal Time" to show the user a score/grade
+        float baseTime = 30f; 
 
-        // Simple check to find which scene is active
-        // Make sure your scene names in Build Settings match these keywords
         if (sceneName.Contains("1")) baseTime = scene1BaseTime;
         else if (sceneName.Contains("2")) baseTime = scene2BaseTime;
         else if (sceneName.Contains("3")) baseTime = scene3BaseTime;
 
-        // Add penalties: Harder levels take longer to complete
-        // Example: Level 5 adds ~30% more time allowance
+        // Penalty increases with level
         float difficultyPenalty = 1.0f + (currentLevel * 0.06f); 
 
         return baseTime * difficultyPenalty;
     }
 
     /// <summary>
-    /// The Core Algorithm: Decides if level goes UP, DOWN, or STAYS.
+    /// Decides the Next Level based on the selected Mode.
     /// </summary>
     public void AnalyzePerformance(float scoreRatio)
     {
-        Debug.Log($"[DifficultyManager] Analyzing Score Ratio: {scoreRatio:F2}");
+        Debug.Log($"[DifficultyManager] Mode: {progressionMode} | Score Ratio: {scoreRatio:F2}");
 
-        if (scoreRatio > 1.2f)
+        if (progressionMode == DifficultyMode.Linear)
         {
-            // Player was too fast (Game too easy) -> Increase Difficulty
+            // --- LINEAR ALGORITHM ---
+            // Simply increase level no matter what.
+            // This forces "Progressive Overload".
             currentLevel++;
-            Debug.Log("Result: Excellent! Level Up.");
-        }
-        else if (scoreRatio > 0.9f)
-        {
-            // Player is in the zone -> Progressive Overload (Increase slowly)
-            currentLevel++; 
-            Debug.Log("Result: Good Flow. Level Up (Progressive Overload).");
-        }
-        else if (scoreRatio < 0.6f)
-        {
-            // Player struggled significantly -> Decrease Difficulty
-            currentLevel--;
-            Debug.Log("Result: Struggled. Level Down.");
+            Debug.Log("Result (Linear): Forced Level Up.");
         }
         else
         {
-            // Between 0.6 and 0.9 -> Maintain Level
-            Debug.Log("Result: Balanced. Maintain Level.");
+            // --- ADAPTIVE ALGORITHM ---
+            // Your novel research logic
+            if (scoreRatio > 1.2f)
+            {
+                currentLevel++;
+                Debug.Log("Result (Adaptive): Excellent! Level Up.");
+            }
+            else if (scoreRatio > 0.9f)
+            {
+                currentLevel++; 
+                Debug.Log("Result (Adaptive): Good Flow. Level Up.");
+            }
+            else if (scoreRatio < 0.6f)
+            {
+                currentLevel--;
+                Debug.Log("Result (Adaptive): Struggled. Level Down.");
+            }
+            else
+            {
+                Debug.Log("Result (Adaptive): Balanced. Maintain Level.");
+            }
         }
 
-        // Clamp values
+        // Safety Clamp (Ensure we stay between 1 and 5)
         currentLevel = Mathf.Clamp(currentLevel, 1, maxLevel);
+        Debug.Log($"[DifficultyManager] New Level Set To: {currentLevel}");
     }
 }

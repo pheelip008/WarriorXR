@@ -292,6 +292,10 @@ public class GameTimeManager : MonoBehaviour
 
         // 3. Update UI
         UpdateScoreUI(levelScore);
+        if (resultPanel != null)
+        {
+            resultPanel.SetActive(true);
+        }
 
         Debug.Log($"Level Done. Level Score: {levelScore:F2}, New Total: {GlobalScore:F2}");
 
